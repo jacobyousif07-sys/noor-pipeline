@@ -1,0 +1,545 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Noor Energy x SwitchDin — Pipeline Manager</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #0D1117; --card: #161B22; --card2: #1C2128; --border: #21262D;
+  --text: #F0F6FC; --muted: #8B949E; --dim: #6E7681;
+  --orange: #E87722; --orangeL: #FF9A4D; --green: #3FB950; --red: #F85149;
+  --yellow: #D29922; --blue: #58A6FF; --teal: #00D4BC; --purple: #BC8CFF;
+  --tealDk: #00B4A0; --yellowL: #E8B931;
+}
+* { margin:0; padding:0; box-sizing:border-box; }
+body { font-family:'DM Sans',sans-serif; background:var(--bg); color:var(--text); min-height:100vh; }
+button { font-family:inherit; cursor:pointer; }
+input,textarea { font-family:inherit; }
+.root { max-width:1440px; margin:0 auto; padding:16px; }
+
+/* Header */
+.hdr { display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:14px; flex-wrap:wrap; gap:10px; }
+.logo { width:42px; height:42px; background:linear-gradient(135deg,var(--orange),var(--orangeL)); border-radius:10px; display:flex; align-items:center; justify-content:center; font-family:'JetBrains Mono',monospace; font-weight:700; font-size:14px; color:#fff; box-shadow:0 3px 14px rgba(232,119,34,0.3); flex-shrink:0; }
+.bdg { display:inline-flex; align-items:center; gap:5px; padding:3px 9px; border-radius:14px; font-size:10px; font-weight:600; font-family:'JetBrains Mono',monospace; }
+
+/* Stats row */
+.stats { display:grid; grid-template-columns:repeat(5,1fr); gap:8px; margin-bottom:12px; }
+.stat-box { background:var(--card); border:1px solid var(--border); border-radius:8px; padding:10px 12px; }
+.stat-lbl { font-family:'JetBrains Mono',monospace; font-size:8px; font-weight:700; text-transform:uppercase; letter-spacing:1px; color:var(--dim); margin-bottom:3px; }
+.stat-val { font-size:22px; font-weight:700; letter-spacing:-1px; }
+.stat-unit { font-size:11px; font-weight:400; color:var(--muted); }
+
+/* Cards */
+.card { background:var(--card); border:1px solid var(--border); border-radius:10px; padding:14px; }
+
+/* View tabs */
+.vtabs { display:flex; gap:3px; margin-bottom:10px; background:var(--card); border-radius:8px; padding:3px; border:1px solid var(--border); }
+.vtab { flex:1; padding:8px 10px; border-radius:6px; font-size:12px; font-weight:600; border:none; color:var(--muted); background:transparent; transition:all .15s; }
+.vtab.on { color:var(--orangeL); background:rgba(232,119,34,0.12); }
+
+/* Filters */
+.filters { display:flex; gap:6px; margin-bottom:10px; flex-wrap:wrap; align-items:center; }
+.search { padding:5px 10px; border-radius:6px; border:1px solid var(--border); background:var(--bg); color:var(--text); font-size:12px; outline:none; min-width:120px; }
+.fbtn { padding:4px 9px; border-radius:5px; font-size:10px; font-weight:600; border:1px solid transparent; color:var(--muted); background:rgba(255,255,255,0.04); transition:all .15s; }
+.fbtn.on { background:rgba(232,119,34,0.12); color:var(--orangeL); border-color:rgba(232,119,34,0.3); }
+.fbtn.gon { background:rgba(63,185,80,0.12); color:var(--green); border-color:rgba(63,185,80,0.3); }
+
+/* Council row */
+.crow { display:flex; align-items:center; gap:8px; padding:10px 12px; background:var(--card2); border-radius:8px; border:2px solid transparent; transition:all .15s; margin-bottom:3px; }
+.crow.sel { box-shadow:0 0 0 1px rgba(255,255,255,0.1); }
+.chk { width:18px; height:18px; border-radius:4px; display:flex; align-items:center; justify-content:center; flex-shrink:0; border:2px solid var(--dim); background:transparent; cursor:pointer; font-size:9px; font-weight:800; color:#000; }
+.chk.on { border:none; }
+.tag { font-size:9px; font-weight:600; padding:2px 6px; border-radius:4px; font-family:'JetBrains Mono',monospace; display:inline-block; white-space:nowrap; }
+.dot { width:6px; height:6px; border-radius:50%; display:inline-block; }
+.arrow-btn { width:28px; height:28px; border-radius:6px; border:none; background:rgba(255,255,255,0.06); color:var(--muted); font-size:13px; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+
+/* Detail */
+.back-btn { padding:5px 12px; border-radius:6px; border:1px solid var(--border); background:var(--card); color:var(--text); font-size:12px; font-weight:600; }
+.dtag { font-size:10px; font-weight:600; padding:2px 8px; border-radius:5px; font-family:'JetBrains Mono',monospace; }
+.stage-btn { padding:5px 12px; border-radius:6px; font-size:11px; border:1px solid transparent; background:transparent; color:var(--dim); }
+.stage-btn.on { font-weight:700; }
+.tabs { display:flex; gap:2px; margin-bottom:10px; background:var(--card); border-radius:8px; padding:2px; border:1px solid var(--border); flex-wrap:wrap; }
+.tab { padding:7px 10px; border-radius:5px; font-size:11px; font-weight:600; border:none; color:var(--muted); background:transparent; white-space:nowrap; }
+.tab.on { background:rgba(232,119,34,0.12); color:var(--orangeL); }
+.lbl { font-size:9px; font-family:'JetBrains Mono',monospace; font-weight:700; text-transform:uppercase; letter-spacing:1px; color:var(--dim); margin-bottom:3px; }
+.val { font-size:13px; color:var(--text); }
+.grid4 { display:grid; grid-template-columns:1fr 1fr 1fr 1fr; gap:12px; }
+.grid2 { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+.empty { text-align:center; padding:40px 16px; }
+.footer { text-align:center; padding:16px 0 6px; color:var(--dim); font-size:9px; font-family:'JetBrains Mono',monospace; }
+
+/* Action items */
+.act-row { display:flex; align-items:flex-start; gap:10px; padding:10px 12px; background:var(--card2); border-radius:6px; margin-bottom:3px; border:1px solid var(--border); cursor:pointer; transition:opacity .15s; }
+.act-chk { width:18px; height:18px; border-radius:4px; border:2px solid var(--dim); background:transparent; display:flex; align-items:center; justify-content:center; flex-shrink:0; margin-top:1px; font-size:10px; font-weight:800; color:#000; }
+.act-chk.done { background:var(--blue); border-color:var(--blue); }
+.progress { height:5px; background:rgba(255,255,255,0.06); border-radius:3px; margin-bottom:14px; overflow:hidden; }
+.progress-fill { height:100%; border-radius:3px; transition:width .3s; }
+
+/* Tracker */
+.tracker-cols { display:flex; gap:8px; overflow-x:auto; }
+.tracker-col { flex:1; min-width:160px; background:var(--card2); border-radius:8px; padding:10px; }
+.tracker-card { background:var(--card); border-radius:6px; padding:8px; margin-bottom:4px; border:1px solid var(--border); cursor:pointer; }
+
+/* Notes */
+.notes-ta { width:100%; padding:12px 14px; border-radius:8px; border:1px solid var(--border); background:var(--bg); color:var(--text); font-size:13px; resize:vertical; outline:none; line-height:1.6; min-height:280px; }
+
+/* Selected view action btns */
+.sm-btn { padding:4px 10px; border-radius:5px; border:none; font-size:11px; font-weight:600; cursor:pointer; }
+
+/* Responsive */
+@media(max-width:900px) {
+  .stats { grid-template-columns:repeat(3,1fr); }
+  .grid4 { grid-template-columns:1fr 1fr; }
+}
+@media(max-width:600px) {
+  .stats { grid-template-columns:repeat(2,1fr); }
+  .grid4,.grid2 { grid-template-columns:1fr; }
+}
+
+/* Animate in */
+@keyframes fadeUp { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:translateY(0); } }
+.fade-up { animation: fadeUp .25s ease both; }
+
+/* Sync indicator */
+.sync-dot { width:8px; height:8px; border-radius:50%; display:inline-block; margin-right:4px; }
+.sync-bar { display:flex; align-items:center; gap:4px; font-size:9px; font-family:'JetBrains Mono',monospace; color:var(--dim); padding:4px 10px; border-radius:12px; background:rgba(255,255,255,0.03); border:1px solid var(--border); }
+@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
+.syncing .sync-dot { animation: pulse 1s infinite; }
+
+/* Login screen */
+.login-wrap { display:flex; align-items:center; justify-content:center; min-height:100vh; padding:20px; }
+.login-box { background:var(--card); border:1px solid var(--border); border-radius:16px; padding:40px 36px; max-width:400px; width:100%; text-align:center; box-shadow:0 8px 40px rgba(0,0,0,0.4); }
+.login-logo { width:64px; height:64px; background:linear-gradient(135deg,var(--orange),var(--orangeL)); border-radius:16px; display:flex; align-items:center; justify-content:center; font-family:'JetBrains Mono',monospace; font-weight:700; font-size:22px; color:#fff; margin:0 auto 20px; box-shadow:0 4px 20px rgba(232,119,34,0.3); }
+.login-title { font-size:22px; font-weight:700; margin-bottom:4px; }
+.login-sub { font-size:13px; color:var(--muted); margin-bottom:24px; }
+.login-input { width:100%; padding:12px 16px; border-radius:10px; border:2px solid var(--border); background:var(--bg); color:var(--text); font-size:14px; outline:none; transition:border-color .2s; }
+.login-input:focus { border-color:var(--orange); }
+.login-input::placeholder { color:var(--dim); }
+.login-btn { width:100%; padding:12px; border-radius:10px; border:none; background:linear-gradient(135deg,var(--orange),var(--orangeL)); color:#fff; font-size:14px; font-weight:700; cursor:pointer; margin-top:12px; transition:opacity .2s; }
+.login-btn:hover { opacity:0.9; }
+.login-btn:disabled { opacity:0.5; cursor:not-allowed; }
+.login-err { color:var(--red); font-size:12px; margin-top:10px; min-height:18px; }
+.login-lock { font-size:11px; color:var(--dim); margin-top:20px; font-family:'JetBrains Mono',monospace; }
+.logout-btn { padding:4px 10px; border-radius:5px; border:1px solid rgba(248,81,73,0.3); background:rgba(248,81,73,0.08); color:var(--red); font-size:10px; font-weight:600; cursor:pointer; font-family:'JetBrains Mono',monospace; }
+</style>
+<!-- Firebase SDK (compat mode for simple usage) -->
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
+</head>
+<body>
+<div class="root" id="login" style="display:none">
+  <div class="login-wrap">
+    <div class="login-box">
+      <div class="login-logo">N&times;S</div>
+      <div class="login-title"><span style="color:var(--orange)">Noor Energy</span> <span style="color:var(--dim)">&times;</span> <span style="color:var(--tealDk)">SwitchDin</span></div>
+      <div class="login-sub">Council Pipeline Manager &mdash; Enter password to continue</div>
+      <input class="login-input" id="pw-input" type="password" placeholder="Enter team password" autocomplete="off">
+      <button class="login-btn" id="pw-btn" onclick="attemptLogin()">Unlock Dashboard</button>
+      <div class="login-err" id="pw-err"></div>
+      <div class="login-lock">&#x1F512; Access restricted to Noor Energy team</div>
+    </div>
+  </div>
+</div>
+<div class="root" id="app" style="display:none"></div>
+<script>
+// ─── DATA ───
+const COUNCILS=[
+{id:16,name:"City of Bayswater",solar:"Solar PV on many facilities + live dashboard",solarLevel:"confirmed",solution:"hybrid",priority:1,valueMin:250,valueMax:400,approach:"VPP retrofit on existing solar + expand to remaining facilities",phone:"08 9272 0622",email:"mail@bayswater.wa.gov.au",region:"Inner East",estKw:120,estFacilities:6,facilities:["Multiple facilities (specifics on live dashboard)"],researchDone:true,strategyDocs:[{name:"Emissions Reduction & Renewable Energy (ERRE) Plan",date:"Adopted 24 Aug 2021",url:"bayswater.wa.gov.au",priority:true},{name:"Environment and Liveability Framework (ELF)",date:"Adopted 26 Apr 2022",url:"bayswater.wa.gov.au"},{name:"Local Climate Change Adaptation Action Plan",date:"Referenced on website",url:"bayswater.wa.gov.au"}],targets:[{target:"100% renewable electricity for City operations (excl. street lighting)",deadline:"2025",status:"overdue",note:"DEADLINE PASSED \u2014 they need help NOW"},{target:"100% renewables and/or carbon offsets for ALL City energy use",deadline:"2030",status:"in-progress"},{target:"Net zero greenhouse gases for energy-related and value chain emissions",deadline:"2040",status:"in-progress"}],contacts:[{role:"Sustainability Officer / Environment Team",name:"TBC \u2014 search LinkedIn",method:"Email to mail@bayswater.wa.gov.au, ask for Sustainability team",priority:true}],keyFindings:["Has published ERRE Plan with SPECIFIC renewable targets \u2014 100% by 2025 (MISSED), 100% by 2030, net zero by 2040","Already installing solar PV across many facilities","Has a LIVE solar PV production dashboard on their website","Recent news (Apr 2026): purchased hybrid tipper truck as part of ERRE targets","Environment and Liveability Framework (ELF) adopted 2022 guides strategy to 2050"],pitchAngle:"You\u2019ve committed to 100% renewable electricity by 2025 \u2014 that deadline has passed. Your individual solar systems are a strong start, but they\u2019re working independently. SwitchDin\u2019s VPP platform connects them so surplus energy from one facility offsets costs at another. The City of Yarra did exactly this. We can help you close the gap to your 2030 target.",reclassified:true,reclassifiedFrom:"Full Solution",reclassifiedTo:"Hybrid (Expand + VPP)",reclassifiedReason:"Research found active solar installations + live dashboard + published targets"},
+{id:1,name:"City of Belmont",solar:"Solar on multiple named assets (Hub, Library, Housing, Aegis)",solarLevel:"confirmed",solution:"droplet",priority:1,valueMin:80,valueMax:120,approach:"Retrofit VPP on existing multi-site solar",phone:"08 9477 7222",email:"belmont@belmont.wa.gov.au",region:"Inner East",estKw:180,estFacilities:5,facilities:["Belmont Hub","Ruth Faulkner Library","Southern Cross Housing","Aegis Parkview","FLO Apartments","Assured Ascot Quays"],researchDone:true,strategyDocs:[{name:"Environment and Sustainability Strategy 2023-2033",date:"2023 (10-year strategy)",url:"belmont.wa.gov.au",priority:true},{name:"Community Infrastructure Plan 2022-2040 (Part 1 & 2)",date:"2022",url:"belmont.wa.gov.au",note:"Lists ALL council facilities \u2014 essential for site planning"},{name:"Strategic Community Plan 2024-2034",date:"2024 (recently updated)",url:"belmont.wa.gov.au"},{name:"Corporate Business Plan 2025-2029",date:"2025",url:"belmont.wa.gov.au"},{name:"Asset Management Strategy 2021-2025",date:"2021",url:"belmont.wa.gov.au"}],targets:[{target:"ISO 14001 certified Environmental Management System",deadline:"Ongoing",status:"active",note:"Shows serious commitment to environmental performance"},{target:"Continuous performance improvements (Environment & Sustainability Strategy)",deadline:"2033",status:"in-progress"}],contacts:[{role:"Environment / Sustainability Officer",name:"TBC \u2014 search LinkedIn",method:"Email to belmont@belmont.wa.gov.au",priority:true},{role:"Asset Manager",name:"TBC",method:"Ask via main number 08 9477 7222"}],keyFindings:["Solar CONFIRMED on 4+ named facilities: Belmont Hub, Ruth Faulkner Library, Southern Cross Housing, Aegis Parkview","Has dedicated 10-year Environment and Sustainability Strategy 2023-2033","Community Infrastructure Plan 2022-2040 lists ALL council facilities","ISO 14001 certified Environmental Management System","Recently updated Strategic Community Plan (2024) and Corporate Business Plan (2025)"],pitchAngle:"You already have solar on the Hub, the Library, and community housing. These systems generate energy independently. The City of Yarra connected their council solar into a Virtual Power Plant using SwitchDin \u2014 now surplus from one building offsets costs at another. Belmont is perfectly set up for this. Modest investment, fast payback, plus a live community dashboard."},
+{id:5,name:"City of Swan",solar:"Some facilities have solar",solarLevel:"partial",solution:"hybrid",priority:1,valueMin:300,valueMax:450,approach:"Expand solar + add Droplet VPP",phone:"08 9267 9267",email:"swan@swan.wa.gov.au",region:"North-East",estKw:80,estFacilities:8,facilities:[],researchDone:true,strategyDocs:[{name:"Sustainable Environment Strategy",date:"Current",url:"swan.wa.gov.au",priority:true},{name:"Strategic Community Plan",date:"Current",url:"swan.wa.gov.au",note:"Natural Environment is 1 of 5 Key Result Areas"},{name:"Corporate Business Plan",date:"Current",url:"swan.wa.gov.au"},{name:"Long Term Financial Plan",date:"Current",url:"swan.wa.gov.au"}],targets:[{target:"Sustainable, thriving City \u2014 vision statement",deadline:"Ongoing",status:"in-progress",note:"Sustainability embedded in vision but less specific targets than Bayswater"},{target:"Natural Environment KRA in Strategic Community Plan",deadline:"10 years",status:"in-progress"}],contacts:[{role:"Executive Director, Operations",name:"Matthew MacPherson",method:"Email swan@swan.wa.gov.au addressed to ED Operations",priority:true,note:"Oversees Asset Management, Construction & Maintenance, Fleet & Waste, Project Management"},{role:"CEO",name:"Stephen Cain",method:"Via Governance office"},{role:"ED Community Wellbeing",name:"Mark Bishop",method:"Covers Community Safety, Libraries, Leisure"},{role:"ED Place",name:"Sarah McQuade",method:"Covers Stakeholder Engagement, Communications"},{role:"ED Corporate",name:"David Trevaskis",method:"Covers Financial Services"},{role:"ED Planning and Development",name:"Leon Van der Linde",method:"Covers Strategic Planning"}],keyFindings:["Has a Sustainable Environment Strategy linked from Strategic Community Plan","Natural Environment is 1 of 5 Key Result Areas in their SCP","Vision: A sustainable, thriving City of diverse people and places","Sustainability page is thin \u2014 early in execution = YOUR OPPORTUNITY","Full leadership team identified with names and portfolios","Matthew MacPherson (ED Operations) is your primary target","Closest council to your Midland base \u2014 use local connection in pitch"],pitchAngle:"We\u2019re Noor Energy, based right here near Midland \u2014 in the heart of Swan. We\u2019ve partnered with SwitchDin, whose technology enabled the City of Yarra to create a community energy network. Your Sustainable Environment Strategy shows sustainability is central to Swan\u2019s vision. We\u2019d love to explore how connecting your existing solar and expanding to more facilities could deliver real cost savings and visible community impact."},
+{id:2,name:"City of Stirling",solar:"Solar at several facilities",solarLevel:"confirmed",solution:"droplet",priority:2,valueMin:80,valueMax:120,approach:"Connect existing assets into VPP",phone:"08 9205 8555",email:"stirling@stirling.wa.gov.au",region:"North",estKw:200,estFacilities:6,facilities:[],researchDone:false,strategyDocs:[],targets:[],contacts:[],keyFindings:[],pitchAngle:""},
+{id:3,name:"City of Cockburn",solar:"Solar installations confirmed",solarLevel:"confirmed",solution:"droplet",priority:2,valueMin:80,valueMax:120,approach:"Retrofit + optimise confirmed solar",phone:"08 9411 3444",email:"customer@cockburn.wa.gov.au",region:"South",estKw:160,estFacilities:4,facilities:[],researchDone:false,strategyDocs:[],targets:[],contacts:[],keyFindings:[],pitchAngle:""},
+{id:4,name:"City of Fremantle",solar:"Has sustainability solar projects",solarLevel:"confirmed",solution:"droplet",priority:2,valueMin:80,valueMax:120,approach:"Align with sustainability program",phone:"08 9432 9999",email:"info@fremantle.wa.gov.au",region:"South-West",estKw:150,estFacilities:4,facilities:[],researchDone:false,strategyDocs:[],targets:[],contacts:[],keyFindings:[],pitchAngle:""},
+{id:6,name:"City of Wanneroo",solar:"Some solar installed",solarLevel:"partial",solution:"hybrid",priority:2,valueMin:250,valueMax:400,approach:"Expand existing + connect via VPP",phone:"08 9405 5000",email:"enquiries@wanneroo.wa.gov.au",region:"North",estKw:100,estFacilities:7,facilities:[],researchDone:false,strategyDocs:[],targets:[],contacts:[],keyFindings:[],pitchAngle:""},
+{id:7,name:"City of Armadale",solar:"Solar projects underway",solarLevel:"partial",solution:"hybrid",priority:2,valueMin:250,valueMax:400,approach:"Integrate new projects with VPP",phone:"08 9394 5000",email:"info@armadale.wa.gov.au",region:"South-East",estKw:60,estFacilities:6,facilities:[],researchDone:false,strategyDocs:[],targets:[],contacts:[],keyFindings:[],pitchAngle:""},
+{id:8,name:"City of Canning",solar:"Some solar installed",solarLevel:"partial",solution:"hybrid",priority:2,valueMin:250,valueMax:400,approach:"Expand + orchestrate",phone:"1300 422 664",email:"customer@canning.wa.gov.au",region:"South-East",estKw:90,estFacilities:6,facilities:[],researchDone:false,strategyDocs:[],targets:[],contacts:[],keyFindings:[],pitchAngle:""},
+{id:9,name:"City of Melville",solar:"Community buildings have solar",solarLevel:"partial",solution:"hybrid",priority:2,valueMin:250,valueMax:400,approach:"Expand community solar + VPP",phone:"08 9364 0666",email:"melinfo@melville.wa.gov.au",region:"South",estKw:70,estFacilities:5,facilities:[],researchDone:false,strategyDocs:[],targets:[],contacts:[],keyFindings:[],pitchAngle:""},
+{id:10,name:"City of Vincent",solar:"Community buildings have solar",solarLevel:"partial",solution:"hybrid",priority:2,valueMin:200,valueMax:350,approach:"Expand community solar + VPP",phone:"08 9273 6000",email:"mail@vincent.wa.gov.au",region:"Inner North",estKw:50,estFacilities:4,facilities:[],researchDone:false,strategyDocs:[],targets:[],contacts:[],keyFindings:[],pitchAngle:""},
+{id:11,name:"City of Rockingham",solar:"Some solar installed",solarLevel:"partial",solution:"hybrid",priority:3,valueMin:250,valueMax:400,approach:"Expand + orchestrate",phone:"08 9528 0333",email:"customer@rockingham.wa.gov.au",region:"South",estKw:80,estFacilities:6,facilities:[],researchDone:false,strategyDocs:[],targets:[],contacts:[],keyFindings:[],pitchAngle:""},
+{id:12,name:"City of Subiaco",solar:"Some solar installed",solarLevel:"partial",solution:"hybrid",priority:3,valueMin:200,valueMax:350,approach:"Expand + orchestrate",phone:"08 9237 9222",email:"city@subiaco.wa.gov.au",region:"Inner West",estKw:40,estFacilities:3,facilities:[],researchDone:false,strategyDocs:[],targets:[],contacts:[],keyFindings:[],pitchAngle:""},
+{id:13,name:"City of Mandurah",solar:"Some solar installed",solarLevel:"partial",solution:"hybrid",priority:3,valueMin:250,valueMax:400,approach:"Expand + orchestrate",phone:"08 9550 3777",email:"council@mandurah.wa.gov.au",region:"South",estKw:80,estFacilities:5,facilities:[],researchDone:false,strategyDocs:[],targets:[],contacts:[],keyFindings:[],pitchAngle:""},
+{id:14,name:"Town of Victoria Park",solar:"Some solar installed",solarLevel:"partial",solution:"hybrid",priority:3,valueMin:150,valueMax:250,approach:"Expand + Droplet retrofit",phone:"08 9311 8111",email:"admin@vicpark.wa.gov.au",region:"Inner South",estKw:30,estFacilities:3,facilities:[],researchDone:false,strategyDocs:[],targets:[],contacts:[],keyFindings:[],pitchAngle:""},
+{id:15,name:"Shire of Kalamunda",solar:"Some solar installed",solarLevel:"partial",solution:"hybrid",priority:3,valueMin:150,valueMax:250,approach:"Expand + Droplet retrofit",phone:"08 9257 9999",email:"enquiries@kalamunda.wa.gov.au",region:"Hills",estKw:40,estFacilities:3,facilities:[],researchDone:false,strategyDocs:[],targets:[],contacts:[],keyFindings:[],pitchAngle:""},
+{id:17,name:"City of Perth",solar:"Not publicly listed",solarLevel:"none",solution:"full",priority:2,valueMin:600,valueMax:900,approach:"Flagship city \u2014 high visibility",phone:"08 9461 3333",email:"info@cityofperth.wa.gov.au",region:"CBD",estKw:0,estFacilities:8,facilities:[],researchDone:false,strategyDocs:[],targets:[],contacts:[],keyFindings:[],pitchAngle:""},
+{id:18,name:"City of Joondalup",solar:"Not publicly listed",solarLevel:"none",solution:"full",priority:2,valueMin:500,valueMax:700,approach:"Large council \u2014 big footprint",phone:"08 9400 4000",email:"info@joondalup.wa.gov.au",region:"North",estKw:0,estFacilities:7,facilities:[],researchDone:false,strategyDocs:[],targets:[],contacts:[],keyFindings:[],pitchAngle:""},
+{id:19,name:"City of Gosnells",solar:"Not publicly listed",solarLevel:"none",solution:"full",priority:3,valueMin:400,valueMax:600,approach:"Greenfield turnkey opportunity",phone:"08 9397 3000",email:"council@gosnells.wa.gov.au",region:"South-East",estKw:0,estFacilities:5,facilities:[],researchDone:false,strategyDocs:[],targets:[],contacts:[],keyFindings:[],pitchAngle:""},
+{id:20,name:"City of South Perth",solar:"Not publicly listed",solarLevel:"none",solution:"full",priority:3,valueMin:400,valueMax:600,approach:"Greenfield turnkey opportunity",phone:"08 9474 0777",email:"enquiries@southperth.wa.gov.au",region:"Inner South",estKw:0,estFacilities:4,facilities:[],researchDone:false,strategyDocs:[],targets:[],contacts:[],keyFindings:[],pitchAngle:""},
+{id:21,name:"City of Kwinana",solar:"Not publicly listed",solarLevel:"none",solution:"full",priority:3,valueMin:400,valueMax:600,approach:"Industrial council potential",phone:"08 9439 0200",email:"customer@kwinana.wa.gov.au",region:"South",estKw:0,estFacilities:5,facilities:[],researchDone:false,strategyDocs:[],targets:[],contacts:[],keyFindings:[],pitchAngle:""},
+{id:22,name:"City of Nedlands",solar:"Not publicly listed",solarLevel:"none",solution:"full",priority:3,valueMin:300,valueMax:500,approach:"Greenfield turnkey",phone:"08 9273 3500",email:"council@nedlands.wa.gov.au",region:"West",estKw:0,estFacilities:3,facilities:[],researchDone:false,strategyDocs:[],targets:[],contacts:[],keyFindings:[],pitchAngle:""},
+{id:23,name:"Town of Claremont",solar:"Not publicly listed",solarLevel:"none",solution:"full",priority:3,valueMin:200,valueMax:350,approach:"Smaller town \u2014 quick win",phone:"08 9285 4300",email:"toc@claremont.wa.gov.au",region:"West",estKw:0,estFacilities:2,facilities:[],researchDone:false,strategyDocs:[],targets:[],contacts:[],keyFindings:[],pitchAngle:""},
+{id:24,name:"Town of Cottesloe",solar:"Not publicly listed",solarLevel:"none",solution:"full",priority:3,valueMin:150,valueMax:300,approach:"Smaller town \u2014 quick win",phone:"08 9285 5000",email:"council@cottesloe.wa.gov.au",region:"West",estKw:0,estFacilities:2,facilities:[],researchDone:false,strategyDocs:[],targets:[],contacts:[],keyFindings:[],pitchAngle:""},
+{id:25,name:"Town of East Fremantle",solar:"Not publicly listed",solarLevel:"none",solution:"full",priority:3,valueMin:150,valueMax:300,approach:"Quick win",phone:"08 9339 9339",email:"admin@eastfremantle.wa.gov.au",region:"South-West",estKw:0,estFacilities:2,facilities:[],researchDone:false,strategyDocs:[],targets:[],contacts:[],keyFindings:[],pitchAngle:""},
+{id:26,name:"Town of Mosman Park",solar:"Not publicly listed",solarLevel:"none",solution:"full",priority:3,valueMin:150,valueMax:250,approach:"Quick win",phone:"08 9384 1633",email:"admin@mosmanpark.wa.gov.au",region:"West",estKw:0,estFacilities:2,facilities:[],researchDone:false,strategyDocs:[],targets:[],contacts:[],keyFindings:[],pitchAngle:""},
+{id:27,name:"Town of Cambridge",solar:"Not publicly listed",solarLevel:"none",solution:"full",priority:3,valueMin:300,valueMax:500,approach:"Greenfield",phone:"08 9347 6000",email:"mail@cambridge.wa.gov.au",region:"West",estKw:0,estFacilities:4,facilities:[],researchDone:false,strategyDocs:[],targets:[],contacts:[],keyFindings:[],pitchAngle:""},
+{id:28,name:"Shire of Mundaring",solar:"Not publicly listed",solarLevel:"none",solution:"full",priority:3,valueMin:300,valueMax:450,approach:"Regional shire",phone:"08 9290 6666",email:"shire@mundaring.wa.gov.au",region:"Hills",estKw:0,estFacilities:4,facilities:[],researchDone:false,strategyDocs:[],targets:[],contacts:[],keyFindings:[],pitchAngle:""},
+{id:29,name:"Shire of Serpentine-Jarrahdale",solar:"Not publicly listed",solarLevel:"none",solution:"full",priority:3,valueMin:300,valueMax:450,approach:"Growing shire",phone:"08 9526 1111",email:"info@sjshire.wa.gov.au",region:"South-East",estKw:0,estFacilities:3,facilities:[],researchDone:false,strategyDocs:[],targets:[],contacts:[],keyFindings:[],pitchAngle:""},
+{id:30,name:"Shire of Peppermint Grove",solar:"Not publicly listed",solarLevel:"none",solution:"full",priority:3,valueMin:100,valueMax:200,approach:"Small shire",phone:"08 9286 8600",email:"admin@peppermintgrove.wa.gov.au",region:"West",estKw:0,estFacilities:2,facilities:[],researchDone:false,strategyDocs:[],targets:[],contacts:[],keyFindings:[],pitchAngle:""}
+];
+const STAGES=[{key:"prospect",label:"Prospect",color:"#8B949E",icon:"\u{1F50D}"},{key:"outreach",label:"Outreach Sent",color:"#D29922",icon:"\u{1F4E7}"},{key:"meeting",label:"Meeting Booked",color:"#58A6FF",icon:"\u{1F91D}"},{key:"proposal",label:"Proposal Sent",color:"#BC8CFF",icon:"\u{1F4C4}"},{key:"negotiation",label:"Negotiation",color:"#E87722",icon:"\u26A1"},{key:"won",label:"Won",color:"#3FB950",icon:"\u{1F3C6}"}];
+const SOL={full:{bg:"rgba(232,119,34,0.1)",border:"rgba(232,119,34,0.3)",text:"#FF9A4D",dark:"#E87722",label:"Full Solution",icon:"\u2600\uFE0F"},hybrid:{bg:"rgba(210,153,34,0.1)",border:"rgba(210,153,34,0.3)",text:"#E8B931",dark:"#D29922",label:"Hybrid",icon:"\u{1F504}"},droplet:{bg:"rgba(0,180,160,0.1)",border:"rgba(0,180,160,0.3)",text:"#00D4BC",dark:"#00B4A0",label:"Droplet VPP",icon:"\u{1F4A7}"}};
+const SK="noor-v5";
+
+function getActions(c,stage){
+  const st=stage||"prospect",s=c.solution;
+  if(st==="prospect"){const b=[{text:"Download "+c.name+" strategy documents (see Strategy Docs tab)"},{text:"Identify Sustainability Officer / Asset Manager at "+c.name},{text:"Research "+c.name+" net-zero / renewable energy targets"}];if(s==="full")return[...b,{text:"Confirm whether "+c.name+" has any unlisted solar"},{text:"Prepare tailored City of Yarra case study for turnkey delivery"},{text:"Build preliminary ROI model: 200kW solar + 100kWh battery across "+c.estFacilities+" facilities"}];if(s==="hybrid")return[...b,{text:"Map which facilities already have solar and which don't"},{text:"Estimate gap: additional solar capacity needed for viable VPP"},{text:"Prepare hybrid pitch: upgrade + fill gaps + connect with SwitchDin"}];return[...b,{text:"Audit existing solar assets \u2014 system sizes, inverter brands, monitoring"},{text:"Check inverter compatibility with SwitchDin Droplet"},{text:"Prepare VPP-only pitch: your solar is underperforming without coordination"}];}
+  if(st==="outreach")return[{text:"Send personalised email referencing their specific targets/strategies"},{text:"Include link to SwitchDin City of Yarra case study"},{text:"Follow up by phone 3 business days after email"},{text:"Connect with key contacts on LinkedIn"},{text:"If no response after 5 days, send follow-up with different angle"}];
+  if(st==="meeting")return[{text:"Prepare presentation: City of Yarra \u2192 "+c.name+" opportunity \u2192 proposed solution"},{text:"Print one-page leave-behind with "+c.name+"-specific estimated savings"},{text:"Meeting: Ask First (10m) \u2192 Present Model (15m) \u2192 Local Fit (10m) \u2192 Next Steps (5m)"},{text:"Ask: What are your current energy costs across all facilities?"},{text:"Ask: What sustainability targets has council committed to, and by when?"},{text:"Offer free energy audit of 2-3 key facilities"}];
+  if(st==="proposal")return[{text:"Complete energy audit of key facilities"},{text:"Deliver technical proposal: system sizing, battery spec, SwitchDin deployment"},{text:"Include financial model: savings, payback, 10yr and 20yr ROI"},{text:"Identify grants: ARENA, CEFC, WA Clean Energy Future Fund"},{text:"Propose pilot: 1-2 facilities first, then scale"}];
+  if(st==="negotiation")return[{text:"Clarify procurement process \u2014 direct engagement threshold vs tender"},{text:"If tender: help draft scope of works for community energy VPP"},{text:"Arrange SwitchDin technical call if needed"},{text:"Prepare final pricing: upfront purchase vs PPA structure"},{text:"Get written confirmation of pilot scope and timeline"}];
+  return[{text:"Contract signed!"},{text:"Kick off: site surveys, detailed design, procurement"},{text:"Coordinate SwitchDin Droplet delivery and Stormcloud setup"},{text:"Plan community dashboard launch event"},{text:"Document project for case study \u2014 use for next council pitch"}];
+}
+
+// ─── FIREBASE WITH FALLBACK ───
+const firebaseConfig = {
+  apiKey: "AIzaSyBKm5YgAwDtOShPLw6PSbfuH4eU3tVCQFU",
+  authDomain: "noorenergy-wa-councils.firebaseapp.com",
+  databaseURL: "https://noorenergy-wa-councils-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "noorenergy-wa-councils",
+  storageBucket: "noorenergy-wa-councils.firebasestorage.app",
+  messagingSenderId: "510009826397",
+  appId: "1:510009826397:web:0313ab5cfb39c7a895c1b4"
+};
+
+let dbRef = null;
+let useFirebase = false;
+let pwRef = null;
+
+try {
+  if(typeof firebase !== "undefined" && firebase.initializeApp) {
+    firebase.initializeApp(firebaseConfig);
+    dbRef = firebase.database().ref("pipeline/v1");
+    pwRef = firebase.database().ref("config/password");
+    useFirebase = true;
+  }
+} catch(e) { useFirebase = false; }
+
+let syncStatus = useFirebase ? "connecting" : "local";
+
+// ─── AUTH ───
+const SESSION_KEY = "noor-auth";
+let isAuthed = false;
+let storedPassword = "Noorenergy02"; // fallback if Firebase unavailable
+
+// Try to load password from Firebase
+if(useFirebase && pwRef) {
+  pwRef.once("value").then(snap => {
+    if(snap.val()) {
+      storedPassword = snap.val();
+    } else {
+      // First time: write the default password to Firebase so you can change it later
+      pwRef.set("Noorenergy02");
+    }
+    checkSession();
+  }).catch(() => checkSession());
+} else {
+  checkSession();
+}
+
+function checkSession(){
+  try {
+    const s = sessionStorage.getItem(SESSION_KEY);
+    if(s === "ok") { isAuthed = true; showDashboard(); return; }
+  } catch(e){}
+  showLogin();
+}
+
+function showLogin(){
+  document.getElementById("login").style.display = "block";
+  document.getElementById("app").style.display = "none";
+  const inp = document.getElementById("pw-input");
+  if(inp) { inp.focus(); inp.addEventListener("keydown", function(e){ if(e.key==="Enter") attemptLogin(); }); }
+}
+
+function attemptLogin(){
+  const inp = document.getElementById("pw-input");
+  const err = document.getElementById("pw-err");
+  const btn = document.getElementById("pw-btn");
+  if(!inp) return;
+  const pw = inp.value.trim();
+  if(!pw){ err.textContent = "Please enter a password"; return; }
+  btn.disabled = true;
+  btn.textContent = "Checking...";
+
+  if(pw === storedPassword){
+    try { sessionStorage.setItem(SESSION_KEY, "ok"); } catch(e){}
+    isAuthed = true;
+    showDashboard();
+  } else {
+    err.textContent = "Incorrect password. Try again.";
+    btn.disabled = false;
+    btn.textContent = "Unlock Dashboard";
+    inp.value = "";
+    inp.focus();
+  }
+}
+
+function showDashboard(){
+  document.getElementById("login").style.display = "none";
+  document.getElementById("app").style.display = "block";
+  initDashboard();
+}
+
+function logout(){
+  try { sessionStorage.removeItem(SESSION_KEY); } catch(e){}
+  isAuthed = false;
+  document.getElementById("app").style.display = "none";
+  document.getElementById("app").innerHTML = "";
+  document.getElementById("login").style.display = "block";
+  const inp = document.getElementById("pw-input");
+  if(inp){ inp.value = ""; inp.focus(); }
+  document.getElementById("pw-err").textContent = "";
+}
+
+function initDashboard(){
+
+// ─── STATE ───
+let state={selected:new Set(),stages:{},notes:{},actionsDone:{},fSol:"all",fPri:"all",fRes:"all",search:"",view:"pipeline",activeId:null,tab:"overview"};
+let saving = false;
+
+// Load from localStorage as initial/fallback
+try {
+  const d = JSON.parse(localStorage.getItem(SK));
+  if(d){
+    if(d.selected) state.selected = new Set(d.selected);
+    if(d.stages) state.stages = d.stages;
+    if(d.notes) state.notes = d.notes;
+    if(d.actionsDone) state.actionsDone = d.actionsDone;
+  }
+} catch(e){}
+
+function save(){
+  // Always save to localStorage as backup
+  try { localStorage.setItem(SK, JSON.stringify({selected:[...state.selected],stages:state.stages,notes:state.notes,actionsDone:state.actionsDone})); } catch(e){}
+
+  if(!useFirebase || !dbRef) return;
+  saving = true;
+  syncStatus = "saving";
+  renderSyncBadge();
+  dbRef.set({
+    selected:[...state.selected],
+    stages:state.stages,
+    notes:state.notes,
+    actionsDone:state.actionsDone
+  }).then(()=>{
+    syncStatus = "live";
+    saving = false;
+    renderSyncBadge();
+  }).catch(()=>{
+    syncStatus = "offline";
+    saving = false;
+    renderSyncBadge();
+  });
+}
+
+function renderSyncBadge(){
+  const el = document.getElementById("sync-badge");
+  if(!el) return;
+  const colors = {live:"#3FB950",saving:"#D29922",connecting:"#58A6FF",offline:"#F85149",local:"#8B949E"};
+  const labels = {live:"Live \u2022 Synced",saving:"Saving...",connecting:"Connecting...",offline:"Offline",local:"Local Only"};
+  el.className = "sync-bar" + (syncStatus==="saving"?" syncing":"");
+  el.innerHTML = '<span class="sync-dot" style="background:'+colors[syncStatus]+'"></span>' + labels[syncStatus];
+}
+
+// Listen for real-time changes from Firebase (if available)
+if(useFirebase && dbRef) {
+  dbRef.on("value", (snapshot) => {
+    if(saving) return;
+    const d = snapshot.val();
+    if(d){
+      if(d.selected) state.selected = new Set(d.selected);
+      if(d.stages) state.stages = d.stages;
+      if(d.notes) state.notes = d.notes;
+      if(d.actionsDone) state.actionsDone = d.actionsDone;
+    }
+    syncStatus = "live";
+    render();
+  }, () => {
+    syncStatus = "offline";
+    renderSyncBadge();
+  });
+}
+
+// ─── HELPERS ───
+const h=s=>s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
+const solClr=(s)=>SOL[s]||SOL.full;
+const priClr=(p)=>p===1?{bg:"rgba(232,119,34,0.15)",c:"#FF9A4D"}:p===2?{bg:"rgba(210,153,34,0.12)",c:"#D29922"}:{bg:"rgba(88,166,255,0.1)",c:"#58A6FF"};
+const dotClr=(l)=>l==="confirmed"?"#3FB950":l==="partial"?"#D29922":"#F85149";
+const statusClr=(s)=>s==="overdue"?"#F85149":s==="active"?"#3FB950":"#D29922";
+const selCs=()=>COUNCILS.filter(c=>state.selected.has(c.id));
+const getStats=()=>{const s=selCs();return{count:s.length,min:s.reduce((a,c)=>a+c.valueMin,0),max:s.reduce((a,c)=>a+c.valueMax,0),full:s.filter(c=>c.solution==="full").length,hybrid:s.filter(c=>c.solution==="hybrid").length,droplet:s.filter(c=>c.solution==="droplet").length};};
+const filtered=()=>COUNCILS.filter(c=>{if(state.fSol!=="all"&&c.solution!==state.fSol)return false;if(state.fPri!=="all"&&c.priority!==+state.fPri)return false;if(state.fRes==="yes"&&!c.researchDone)return false;if(state.fRes==="no"&&c.researchDone)return false;if(state.search&&!c.name.toLowerCase().includes(state.search.toLowerCase()))return false;return true;});
+
+function toggle(id){if(state.selected.has(id))state.selected.delete(id);else state.selected.add(id);save();render();}
+function setStage(id,s){state.stages[id]=s;save();render();}
+function setNote(id,t){state.notes[id]=t;clearTimeout(setNote._t);setNote._t=setTimeout(save,800);}
+setNote._t=null;
+function toggleAct(cid,idx){const k=cid+"-"+(state.stages[cid]||"prospect")+"-"+idx;state.actionsDone[k]=!state.actionsDone[k];save();render();}
+function openDetail(id,t){state.activeId=id;state.tab=t||"overview";render();}
+function closeDetail(){state.activeId=null;render();}
+function setView(v){state.view=v;render();}
+function setTab(t){state.tab=t;render();}
+function setFilter(k,v){state[k]=v;render();}
+
+// ─── RENDER ───
+function render(){
+  const app=document.getElementById("app");
+  const st=getStats();
+  const ac=state.activeId?COUNCILS.find(c=>c.id===state.activeId):null;
+
+  if(ac) { app.innerHTML=renderDetail(ac,st); wireDetail(ac); return; }
+  app.innerHTML=renderMain(st);
+  wireMain();
+}
+
+function renderMain(st){
+  let o=`<div class="hdr"><div style="display:flex;align-items:center;gap:12px"><div class="logo">N\u00D7S</div><div><div style="font-size:20px;font-weight:700"><span style="color:var(--orange)">Noor Energy</span><span style="color:var(--dim);font-weight:300"> \u00D7 </span><span style="color:var(--tealDk)">SwitchDin</span></div><div style="color:var(--muted);font-size:10px;font-family:'JetBrains Mono',monospace">Council Pipeline Manager \u2014 Research Updated</div></div></div><div style="display:flex;gap:6px;flex-wrap:wrap"><span class="bdg" style="background:rgba(63,185,80,0.12);border:1px solid rgba(63,185,80,0.3);color:var(--green)">${st.count} Selected</span><span class="bdg" style="background:rgba(232,119,34,0.12);border:1px solid rgba(232,119,34,0.3);color:var(--orangeL)">$${st.min}K\u2013$${st.max}K</span><span class="bdg" style="background:rgba(0,180,160,0.12);border:1px solid rgba(0,180,160,0.3);color:var(--teal)">3 Researched</span><span id="sync-badge" class="sync-bar"><span class="sync-dot" style="background:#58A6FF"></span>Connecting...</span><button class="logout-btn" onclick="logout()">\u{1F512} Logout</button></div></div>`;
+  // Stats
+  const ss=[{l:"Selected",v:st.count,u:"/30",c:"var(--text)"},{l:"Full Solution",v:st.full,u:"",c:"var(--orangeL)"},{l:"Hybrid",v:st.hybrid,u:"",c:"var(--yellowL)"},{l:"Droplet VPP",v:st.droplet,u:"",c:"var(--teal)"},{l:"Pipeline",v:"$"+st.min+"K",u:"\u2013$"+st.max+"K",c:"var(--green)"}];
+  o+=`<div class="stats">${ss.map(s=>`<div class="stat-box"><div class="stat-lbl">${s.l}</div><div class="stat-val" style="color:${s.c}">${s.v}<span class="stat-unit">${s.u}</span></div></div>`).join("")}</div>`;
+  // View tabs
+  const vts=[{k:"pipeline",l:"All Councils"},{k:"selected",l:"Selected ("+st.count+")"},{k:"tracker",l:"Tracker"}];
+  o+=`<div class="vtabs">${vts.map(v=>`<button class="vtab${state.view===v.k?" on":""}" onclick="setView('${v.k}')">${v.l}</button>`).join("")}</div>`;
+
+  if(state.view==="pipeline") o+=renderPipeline();
+  else if(state.view==="selected") o+=renderSelected();
+  else o+=renderTracker();
+  o+=`<div class="footer">NOOR ENERGY \u00D7 SWITCHDIN \u2014 Pipeline Manager \u2014 Live Dashboard \u2014 April 2026</div>`;
+  return o;
+}
+
+function renderPipeline(){
+  const fs=[{k:"all",l:"All"},{k:"full",l:"Full"},{k:"hybrid",l:"Hybrid"},{k:"droplet",l:"Droplet"}];
+  const ps=[{k:"all",l:"All P"},{k:"1",l:"P1"},{k:"2",l:"P2"},{k:"3",l:"P3"}];
+  const rs=[{k:"all",l:"All"},{k:"yes",l:"\u2713 Researched"},{k:"no",l:"Not Yet"}];
+  let o=`<div class="card"><div class="filters"><input class="search" type="text" placeholder="Search..." value="${h(state.search)}" oninput="setFilter('search',this.value)"><div style="display:flex;gap:3px">${fs.map(f=>`<button class="fbtn${state.fSol===f.k?" on":""}" onclick="setFilter('fSol','${f.k}')">${f.l}</button>`).join("")}</div><div style="display:flex;gap:3px">${ps.map(f=>`<button class="fbtn${state.fPri===f.k?" on":""}" onclick="setFilter('fPri','${f.k}')">${f.l}</button>`).join("")}</div><div style="display:flex;gap:3px">${rs.map(f=>`<button class="fbtn${state.fRes===f.k?(f.k==="all"?" on":" gon"):""}" onclick="setFilter('fRes','${f.k}')">${f.l}</button>`).join("")}</div></div>`;
+  const list=filtered();
+  o+=`<div style="display:flex;flex-direction:column;gap:3px">`;
+  list.forEach(c=>{
+    const sc=solClr(c.solution),sel=state.selected.has(c.id),stg=STAGES.find(s=>s.key===(state.stages[c.id]||"prospect")),pc=priClr(c.priority);
+    o+=`<div class="crow${sel?" sel":""}" style="${sel?"border-color:"+sc.dark+";box-shadow:0 0 0 1px "+sc.dark+"40":""}"><div class="chk${sel?" on":""}" style="${sel?"background:"+sc.text+";":"" }" onclick="toggle(${c.id})">${sel?"\u2713":""}</div><div style="flex:1;min-width:0;cursor:pointer" onclick="openDetail(${c.id})"><div style="display:flex;align-items:center;gap:5px;flex-wrap:wrap"><span style="font-weight:600;font-size:13px">${h(c.name)}</span><span class="tag" style="background:${sc.bg};border:1px solid ${sc.border};color:${sc.text}">${sc.icon} ${sc.label}</span><span class="tag" style="background:${pc.bg};color:${pc.c}">P${c.priority}</span><span class="tag" style="background:${stg.color}18;color:${stg.color}">${stg.icon} ${stg.label}</span>${c.researchDone?`<span class="tag" style="background:rgba(63,185,80,0.12);color:var(--green)">\u2713 Researched</span>`:""}${c.reclassified?`<span class="tag" style="background:rgba(232,119,34,0.12);color:var(--orangeL)">\u26A0 Reclassified</span>`:""}</div><div style="font-size:11px;color:var(--muted);margin-top:2px;display:flex;align-items:center;gap:5px"><span class="dot" style="background:${dotClr(c.solarLevel)}"></span>${h(c.solar)}</div></div><div style="text-align:right;flex-shrink:0"><div style="font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:600">$${c.valueMin}\u2013${c.valueMax}K</div><div style="font-size:10px;color:var(--dim)">${c.region}</div></div><button class="arrow-btn" onclick="openDetail(${c.id})">\u2192</button></div>`;
+  });
+  o+=`</div></div>`;
+  return o;
+}
+
+function renderSelected(){
+  const cs=selCs();
+  if(!cs.length)return`<div class="card"><div class="empty"><div style="font-size:40px;margin-bottom:8px">\u{1F4CB}</div><div style="font-size:16px;font-weight:600">No councils selected</div></div></div>`;
+  let o=`<div class="card">`;
+  ["hybrid","droplet","full"].forEach(sol=>{
+    const s=SOL[sol],items=cs.filter(c=>c.solution===sol);
+    if(!items.length)return;
+    o+=`<div style="margin-bottom:16px"><div style="font-size:14px;font-weight:700;color:${s.text};margin-bottom:8px">${s.icon} ${s.label} \u2014 ${items.length}</div>`;
+    items.forEach(c=>{
+      const stg=STAGES.find(sg=>sg.key===(state.stages[c.id]||"prospect"));
+      o+=`<div style="display:flex;align-items:center;gap:8px;padding:10px 12px;background:var(--card2);border-radius:8px;margin-bottom:3px;border:1px solid var(--border);flex-wrap:wrap"><div style="flex:1;cursor:pointer" onclick="openDetail(${c.id})"><div style="display:flex;align-items:center;gap:6px"><span style="font-weight:600;font-size:13px">${h(c.name)}</span>${c.researchDone?`<span class="tag" style="background:rgba(63,185,80,0.12);color:var(--green)">\u2713</span>`:""}</div><div style="font-size:11px;color:var(--muted);margin-top:2px">${h(c.approach)}</div></div><span class="tag" style="background:${stg.color}18;color:${stg.color}">${stg.icon} ${stg.label}</span><span style="font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:600">$${c.valueMin}\u2013${c.valueMax}K</span>${c.researchDone?`<button class="sm-btn" style="background:rgba(0,180,160,0.1);color:var(--teal)" onclick="openDetail(${c.id},'pitch')">Pitch</button>`:""}<button class="sm-btn" style="background:rgba(88,166,255,0.1);color:var(--blue)" onclick="openDetail(${c.id},'actions')">Actions</button><button class="sm-btn" style="background:rgba(248,81,73,0.08);color:var(--red)" onclick="toggle(${c.id})">\u2715</button></div>`;
+    });
+    o+=`</div>`;
+  });
+  return o+`</div>`;
+}
+
+function renderTracker(){
+  const cs=selCs();
+  if(!cs.length)return`<div class="card"><div class="empty"><div style="font-size:40px;margin-bottom:8px">\u{1F4CA}</div><div style="font-size:16px;font-weight:600">Select councils first</div></div></div>`;
+  let o=`<div class="card" style="overflow-x:auto"><div class="tracker-cols" style="min-width:${STAGES.length*180}px">`;
+  STAGES.forEach(stage=>{
+    const inS=cs.filter(c=>(state.stages[c.id]||"prospect")===stage.key);
+    o+=`<div class="tracker-col" style="border-top:3px solid ${stage.color}"><div style="font-weight:700;font-size:11px;color:${stage.color}">${stage.icon} ${stage.label}</div><div style="font-size:10px;color:var(--dim);font-family:'JetBrains Mono',monospace;margin-bottom:8px">${inS.length} \u2022 $${inS.reduce((a,c)=>a+c.valueMin,0)}K</div>`;
+    inS.forEach(c=>{const s=SOL[c.solution];o+=`<div class="tracker-card" style="border-left:3px solid ${s.text};cursor:pointer" onclick="openDetail(${c.id},'actions')"><div style="font-weight:600;font-size:11px">${h(c.name)}</div><div style="display:flex;justify-content:space-between;margin-top:4px"><span class="tag" style="background:${s.bg};color:${s.text}">${s.icon}</span><span style="font-size:10px;font-family:'JetBrains Mono',monospace;color:var(--muted)">$${c.valueMin}K</span></div></div>`;});
+    if(!inS.length)o+=`<div style="text-align:center;color:var(--dim);font-size:10px;padding:12px">\u2014</div>`;
+    o+=`</div>`;
+  });
+  return o+`</div></div>`;
+}
+
+// ─── DETAIL ───
+function renderDetail(ac){
+  const sc=solClr(ac.solution),stage=state.stages[ac.id]||"prospect",stObj=STAGES.find(s=>s.key===stage),actions=getActions(ac,stage),pc=priClr(ac.priority);
+  let o=`<div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;flex-wrap:wrap"><button class="back-btn" onclick="closeDetail()">\u2190 Back</button><div style="flex:1"><div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap"><span style="font-size:22px;font-weight:700">${h(ac.name)}</span>${ac.researchDone?`<span class="dtag" style="background:rgba(63,185,80,0.15);color:var(--green)">\u2713 RESEARCHED</span>`:""}${ac.reclassified?`<span class="dtag" style="background:rgba(232,119,34,0.15);color:var(--orangeL)">\u26A0 RECLASSIFIED</span>`:""}</div><div style="display:flex;gap:6px;align-items:center;margin-top:4px;flex-wrap:wrap"><span class="dtag" style="background:${sc.bg};border:1px solid ${sc.border};color:${sc.text}">${sc.icon} ${sc.label}</span><span class="dtag" style="background:${pc.bg};color:${pc.c}">P${ac.priority}</span><span class="dtag" style="background:${stObj.color}22;color:${stObj.color};border:1px solid ${stObj.color}44">${stObj.icon} ${stObj.label}</span><span class="dtag" style="background:rgba(63,185,80,0.1);color:var(--green)">$${ac.valueMin}K\u2013$${ac.valueMax}K</span></div></div>`;
+  o+=state.selected.has(ac.id)?`<button class="sm-btn" style="background:rgba(248,81,73,0.12);color:var(--red);border:1px solid rgba(248,81,73,0.3)" onclick="toggle(${ac.id})">\u2715 Remove</button>`:`<button class="sm-btn" style="background:rgba(63,185,80,0.12);color:var(--green);border:1px solid rgba(63,185,80,0.3)" onclick="toggle(${ac.id})">+ Select</button>`;
+  o+=`</div>`;
+  if(ac.reclassified)o+=`<div style="padding:12px;background:rgba(232,119,34,0.08);border-radius:8px;border:1px solid rgba(232,119,34,0.2);margin-bottom:12px;font-size:12px"><span style="font-weight:700;color:var(--orangeL)">\u26A0 RECLASSIFIED:</span> <span style="color:#C9D1D9">Changed from <b>${h(ac.reclassifiedFrom)}</b> \u2192 <b>${h(ac.reclassifiedTo)}</b>. Reason: ${h(ac.reclassifiedReason)}</span></div>`;
+  // Stage bar
+  o+=`<div style="display:flex;gap:3px;margin-bottom:12px;flex-wrap:wrap">${STAGES.map(s=>`<button class="stage-btn${stage===s.key?" on":""}" style="${stage===s.key?"border-color:"+s.color+"44;background:"+s.color+"22;color:"+s.color+";font-weight:700":""}" onclick="setStage(${ac.id},'${s.key}')">${s.icon} ${s.label}</button>`).join("")}</div>`;
+  // Tabs
+  const tabs=[{k:"overview",l:"Overview"},{k:"findings",l:"Research"},{k:"docs",l:"Strategy Docs"},{k:"contacts",l:"Contacts"},{k:"pitch",l:"Sales Pitch"},{k:"actions",l:"Actions"},{k:"notes",l:"Notes"}];
+  o+=`<div class="tabs">${tabs.map(t=>`<button class="tab${state.tab===t.k?" on":""}" onclick="setTab('${t.k}')">${t.l}</button>`).join("")}</div>`;
+  o+=`<div class="card">`;
+  if(state.tab==="overview") o+=renderOverview(ac,sc);
+  else if(state.tab==="findings") o+=renderFindings(ac);
+  else if(state.tab==="docs") o+=renderDocs(ac);
+  else if(state.tab==="contacts") o+=renderContacts(ac);
+  else if(state.tab==="pitch") o+=renderPitch(ac,sc);
+  else if(state.tab==="actions") o+=renderActions(ac,actions,stage,stObj);
+  else if(state.tab==="notes") o+=renderNotes(ac);
+  o+=`</div><div class="footer">NOOR ENERGY \u00D7 SWITCHDIN \u2014 ${h(ac.name)} \u2014 Pipeline Manager</div>`;
+  return o;
+}
+
+function renderOverview(c,sc){
+  let o=`<div class="grid4"><div><div class="lbl">Phone</div><div class="val">${h(c.phone)}</div></div><div><div class="lbl">Email</div><div class="val" style="word-break:break-all">${h(c.email)}</div></div><div><div class="lbl">Region</div><div class="val">${c.region}</div></div><div><div class="lbl">Est. Facilities</div><div class="val">${c.estFacilities}</div></div><div><div class="lbl">Current Solar</div><div class="val" style="display:flex;align-items:center;gap:6px"><span class="dot" style="width:8px;height:8px;background:${dotClr(c.solarLevel)}"></span>${h(c.solar)}</div></div><div><div class="lbl">Est. Capacity</div><div class="val">${c.estKw>0?"~"+c.estKw+" kW":"None identified"}</div></div><div><div class="lbl">Solution Track</div><div class="val" style="color:${sc.text}">${sc.icon} ${sc.label}</div></div><div><div class="lbl">Approach</div><div class="val">${h(c.approach)}</div></div></div>`;
+  if(c.facilities.length)o+=`<div style="margin-top:16px"><div class="lbl">Known Facilities</div><div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:4px">${c.facilities.map(f=>`<span style="padding:4px 10px;border-radius:5px;background:rgba(255,255,255,0.06);font-size:12px;color:var(--muted)">${h(f)}</span>`).join("")}</div></div>`;
+  if(c.targets.length){o+=`<div style="margin-top:20px;padding-top:16px;border-top:1px solid var(--border)"><div class="lbl" style="margin-bottom:8px">Published Targets</div>`;c.targets.forEach(t=>{o+=`<div style="padding:10px;background:${t.status==="overdue"?"rgba(248,81,73,0.06)":"rgba(255,255,255,0.02)"};border-radius:6px;margin-bottom:6px;border-left:3px solid ${statusClr(t.status)}"><div style="font-size:13px;font-weight:600">${h(t.target)}</div><div style="display:flex;gap:8px;margin-top:4px;flex-wrap:wrap"><span style="font-size:11px;font-family:'JetBrains Mono',monospace;color:${t.status==="overdue"?"var(--red)":"var(--muted)"}">Deadline: ${t.deadline}</span><span style="font-size:10px;font-weight:700;padding:1px 6px;border-radius:3px;background:${statusClr(t.status)}22;color:${statusClr(t.status)}">${t.status.toUpperCase()}</span></div>${t.note?`<div style="font-size:11px;color:var(--orangeL);margin-top:4px;font-style:italic">${h(t.note)}</div>`:""}</div>`;});o+=`</div>`;}
+  return o;
+}
+
+function renderFindings(c){
+  if(!c.researchDone)return`<div class="empty"><div style="font-size:16px;font-weight:600">Research not yet completed</div><div style="color:var(--muted);font-size:13px;margin-top:4px">This council hasn\u2019t been researched yet.</div></div>`;
+  let o=`<div style="font-size:15px;font-weight:700;margin-bottom:12px">Key Research Findings</div>`;
+  c.keyFindings.forEach(f=>{o+=`<div style="padding:10px;background:rgba(255,255,255,0.02);border-radius:6px;margin-bottom:4px;font-size:13px;line-height:1.5;border-left:3px solid var(--border)">${h(f)}</div>`;});
+  if(c.pitchAngle)o+=`<div style="margin-top:16px;padding:14px;background:rgba(232,119,34,0.06);border-radius:8px;border:1px solid rgba(232,119,34,0.15)"><div style="font-size:12px;font-weight:700;color:var(--orangeL);margin-bottom:6px">Recommended Pitch Angle</div><div style="font-size:13px;color:#C9D1D9;line-height:1.6;font-style:italic">${h(c.pitchAngle)}</div></div>`;
+  return o;
+}
+
+function renderDocs(c){
+  if(!c.strategyDocs.length)return`<div class="empty"><div style="font-size:16px;font-weight:600">No strategy documents catalogued yet</div><div style="color:var(--muted);font-size:13px;margin-top:4px">Research this council\u2019s website to find their sustainability plans.</div></div>`;
+  let o=`<div style="font-size:15px;font-weight:700;margin-bottom:4px">Strategy Documents to Download</div><div style="font-size:12px;color:var(--muted);margin-bottom:12px">Download these before your first outreach</div>`;
+  c.strategyDocs.forEach(d=>{o+=`<div style="padding:12px;background:${d.priority?"rgba(232,119,34,0.04)":"rgba(255,255,255,0.02)"};border-radius:8px;margin-bottom:6px;border:${d.priority?"1px solid rgba(232,119,34,0.15)":"1px solid var(--border)"}"><div style="display:flex;align-items:center;gap:6px">${d.priority?`<span class="tag" style="background:rgba(232,119,34,0.15);color:var(--orangeL)">PRIORITY</span>`:""}<span style="font-size:14px;font-weight:600">${h(d.name)}</span></div><div style="font-size:11px;color:var(--muted);margin-top:4px">${h(d.date)}</div><div style="font-size:12px;color:var(--blue);margin-top:4px;font-family:'JetBrains Mono',monospace">${h(d.url)}</div>${d.note?`<div style="font-size:11px;color:var(--yellow);margin-top:4px;font-style:italic">${h(d.note)}</div>`:""}</div>`;});
+  return o;
+}
+
+function renderContacts(c){
+  if(!c.contacts.length)return`<div class="empty"><div style="font-size:16px;font-weight:600">No contacts identified yet</div><div style="color:var(--muted);font-size:13px;margin-top:4px">Search LinkedIn for sustainability staff at this council.</div></div>`;
+  let o=`<div style="font-size:15px;font-weight:700;margin-bottom:12px">Identified Contacts</div>`;
+  c.contacts.forEach(ct=>{o+=`<div style="padding:12px;background:${ct.priority?"rgba(63,185,80,0.04)":"rgba(255,255,255,0.02)"};border-radius:8px;margin-bottom:6px;border:${ct.priority?"1px solid rgba(63,185,80,0.15)":"1px solid var(--border)"}"><div style="display:flex;align-items:center;gap:6px">${ct.priority?`<span class="tag" style="background:rgba(63,185,80,0.15);color:var(--green)">PRIMARY</span>`:""}<span style="font-size:14px;font-weight:600">${h(ct.role)}</span></div><div style="font-size:13px;margin-top:4px">${h(ct.name)}</div><div style="font-size:12px;color:var(--muted);margin-top:2px">${h(ct.method)}</div>${ct.note?`<div style="font-size:11px;color:var(--yellow);margin-top:4px;font-style:italic">${h(ct.note)}</div>`:""}</div>`;});
+  o+=`<div style="margin-top:12px;padding:12px;background:rgba(88,166,255,0.06);border-radius:8px;border:1px solid rgba(88,166,255,0.12)"><div style="font-size:12px;font-weight:600;color:var(--blue);margin-bottom:4px">General Contact</div><div style="font-size:13px">Phone: ${h(c.phone)}</div><div style="font-size:13px">Email: ${h(c.email)}</div></div>`;
+  return o;
+}
+
+function renderPitch(c,sc){
+  if(!c.pitchAngle)return`<div class="empty"><div style="font-size:16px;font-weight:600">Pitch not prepared yet</div><div style="color:var(--muted);font-size:13px;margin-top:4px">Complete research first to generate a tailored pitch.</div></div>`;
+  const qs=c.solution==="droplet"?["How many facilities have solar, and what are the total capacities?","What inverter brands and models are installed?","Do you have any monitoring or energy management platform?","What % of solar is being exported vs self-consumed?","Have you explored energy sharing between buildings?","What are your top 3 energy priorities for the next 12 months?"]:c.solution==="hybrid"?["Which facilities currently have solar, and what sizes?","What inverter brands are installed?","Which facilities without solar have the highest energy bills?","What\u2019s your annual energy spend across all facilities?","Are you satisfied with your existing solar performance?","What sustainability targets has council committed to?"]:["What are your current annual electricity costs across all facilities?","Which facilities have the highest energy consumption?","Has council set specific renewable energy / net-zero targets?","Are there any existing solar installations we should know about?","What is your procurement process for this value range?","Are you pursuing any state or federal grant opportunities?"];
+  let o=`<div style="padding:16px;background:${sc.bg};border-radius:10px;border:1px solid ${sc.border};margin-bottom:20px"><div style="font-size:20px;font-weight:700;color:${sc.text}">Pitch for ${h(c.name)}</div><div style="font-size:13px;color:var(--muted);margin-top:4px">${sc.icon} ${sc.label} \u2014 powered by Noor Energy \u00D7 SwitchDin</div></div>`;
+  o+=`<div style="margin-bottom:20px"><div style="font-size:14px;font-weight:700;margin-bottom:8px;padding-bottom:6px;border-bottom:1px solid var(--border)">Recommended Pitch Angle</div><div style="padding:14px;background:rgba(0,0,0,0.15);border-radius:8px;font-size:13px;color:#C9D1D9;line-height:1.6;font-style:italic;border-left:3px solid ${sc.text}">${h(c.pitchAngle)}</div></div>`;
+  if(c.targets.length){o+=`<div style="margin-bottom:20px"><div style="font-size:14px;font-weight:700;margin-bottom:8px;padding-bottom:6px;border-bottom:1px solid var(--border)">Their Published Targets \u2014 Reference These</div>`;c.targets.forEach(t=>{o+=`<div style="padding:10px;margin-bottom:4px;border-radius:6px;background:${t.status==="overdue"?"rgba(248,81,73,0.06)":"rgba(255,255,255,0.02)"};border-left:3px solid ${t.status==="overdue"?"var(--red)":"var(--yellow)"}"><div style="font-size:13px;font-weight:600">${h(t.target)} \u2014 by ${t.deadline}</div>${t.note?`<div style="font-size:11px;color:var(--orangeL);margin-top:2px">${h(t.note)}</div>`:""}</div>`;});o+=`</div>`;}
+  o+=`<div style="margin-bottom:20px"><div style="font-size:14px;font-weight:700;margin-bottom:8px;padding-bottom:6px;border-bottom:1px solid var(--border)">Discovery Questions \u2014 Ask in First Meeting</div>${qs.map((q,i)=>`<div style="display:flex;align-items:flex-start;gap:8px;padding:8px 10px;background:rgba(88,166,255,0.04);border-radius:6px;margin-bottom:4px;border:1px solid rgba(88,166,255,0.08)"><span style="color:var(--blue);font-weight:700;font-family:'JetBrains Mono',monospace;font-size:11px;flex-shrink:0">Q${i+1}</span><span style="font-size:13px">${h(q)}</span></div>`).join("")}</div>`;
+  o+=`<div style="padding:14px;background:rgba(0,180,160,0.06);border-radius:8px;border:1px solid rgba(0,180,160,0.12)"><div style="font-size:12px;font-weight:700;color:var(--teal);margin-bottom:4px">City of Yarra Reference</div><div style="font-size:12px;color:var(--muted);line-height:1.5">SwitchDin\u2019s Droplet + Stormcloud deployed across council facilities. Solar energy sharing via VPP. ~200kW solar, ~$85K/yr savings, ~240t CO\u2082/yr. Perth\u2019s 35% higher solar yield means ${h(c.name)} sees even better results.</div></div>`;
+  return o;
+}
+
+function renderActions(c,actions,stage,stObj){
+  const doneCount=actions.filter((_,i)=>state.actionsDone[c.id+"-"+stage+"-"+i]).length;
+  const pct=Math.round(doneCount/actions.length*100);
+  let o=`<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px"><div><div style="font-size:15px;font-weight:700">${stObj.icon} ${stObj.label} Stage Actions</div><div style="font-size:12px;color:var(--muted);margin-top:2px">Complete before moving to next stage</div></div><div style="font-family:'JetBrains Mono',monospace;font-size:12px;color:${stObj.color}">${doneCount}/${actions.length}</div></div><div class="progress"><div class="progress-fill" style="background:${stObj.color};width:${pct}%"></div></div>`;
+  actions.forEach((a,i)=>{const done=state.actionsDone[c.id+"-"+stage+"-"+i];o+=`<div class="act-row" style="opacity:${done?0.5:1}" onclick="toggleAct(${c.id},${i})"><div class="act-chk${done?" done":""}" style="${done?"background:"+stObj.color+";border-color:"+stObj.color:""}">${done?"\u2713":""}</div><span style="text-decoration:${done?"line-through":"none"};font-size:13px;line-height:1.4">${h(a.text)}</span></div>`;});
+  return o;
+}
+
+function renderNotes(c){
+  return`<div style="font-size:15px;font-weight:700;margin-bottom:4px">Notes for ${h(c.name)}</div><div style="font-size:12px;color:var(--muted);margin-bottom:10px">Meeting notes, follow-ups, contact details \u2014 synced live across all devices</div><textarea class="notes-ta" id="notes-ta" placeholder="Add notes about ${h(c.name)}...">${h(state.notes[c.id]||"")}</textarea>`;
+}
+
+function wireDetail(ac){
+  const ta=document.getElementById("notes-ta");
+  if(ta)ta.addEventListener("input",function(){setNote(ac.id,this.value);});
+}
+function wireMain(){}
+
+render();
+} // end initDashboard
+</script>
+</body>
+</html>
